@@ -1,0 +1,171 @@
+<html>
+
+<head>
+    <title>Geo Mapa </title>
+    <!--script src="http://libs.cartocdn.com/cartodb.js/v3/3.12/cartodb.js"></script-->
+    <link rel="stylesheet" href="http://libs.cartocdn.com/cartodb.js/v3/3.15/themes/css/cartodb.css" />
+
+    <style>
+        .map {
+            border: 2px solid black;
+            width: 800px;
+            margin: 0 auto
+        }
+        
+        .table_results {
+            font-size: 9px
+        }
+        
+        #container {
+            margin: 20px;
+        }
+        
+        .noodd {
+            background: white;
+        }
+        
+        .odd {
+            background: #EEE;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.4.1.js" integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+    <script src="http://libs.cartocdn.com/cartodb.js/v3/3.15/cartodb.js"></script>
+    <script type="text/javascript">
+        var HOST_URL = "http://nominatim.openstreetmap.org";
+        var EXAMPLE_BASIC = HOST_URL + '/?format=json&json_callback=render&accept-language=es';
+        var points = '';
+        var options = '';
+        var newSearchURL = '';
+        var actual = '';
+
+        function showBasicURL() {
+            options = EXAMPLE_BASIC;
+
+            var ciudad = document.getElementById("ciudad").value;
+            var pais = document.getElementById("pais").value;
+            var q = document.getElementById("q").value;
+
+
+            if (q != "") {
+                options += "&q=" + encodeURIComponent(q);
+                document.getElementById("ciudad").value = '';
+                document.getElementById("pais").value = '';
+            } else {
+                if (ciudad != "") {
+                    options += "&city=" + encodeURIComponent(ciudad);
+                }
+                if (pais != "") {
+                    options += "&country=" + encodeURIComponent(pais);
+                }
+            }
+
+
+        };
+
+        function geoLocaliza() {
+
+            var script = document.createElement('script');
+            script.type = 'text/javascript';
+            showBasicURL();
+            var newURL = options;
+            script.src = newURL;
+            //alert (script.src);
+            document.body.appendChild(script);
+        };
+
+        function render(response) {
+            //alert (response);
+            var html = '';
+            var i = 0;
+            var j = 0;
+
+            if (response) {
+                html += '<form><table class="table_results"><tr><th colspan="5">Search Results</th></tr>'
+                html += '<tr><td><b>#</b></td><td><b>Type</b></td><td style="width:100px;"><b>Name</b></td><td><b>lat</b></td><td><b>Long</b></td><td style="width:20px;"><b>Mapa</b></td></tr>';
+                html += '<tbody>'
+
+                for (var i = 0; i < response.length; i++) {
+                    var result = response[i];
+                    var resultNum = i + 1;
+                    var trclass = (i % 2) ? 'noodd' : 'odd';
+                    html += "<tr class='" + trclass + "' valign=\"top\">";
+                    html += "<td>" + resultNum + "</td>";
+                    html += "<td>" + result.type + "</td>";
+
+                    html += "<td>";
+                    if (result.display_name) {
+                        var new_display_name = result.display_name.replace(/,/g, ",<br />")
+                        html += new_display_name;
+                    }
+                    html += "</td>";
+
+                    html += "<td><span id='lat" + resultNum + "'>" + result['lat'] + "</span></td>";
+                    html += "<td><span id='lon" + resultNum + "'>" + result['lon'] + "</td>";
+                    html += "<td><input id='" + resultNum + "' type='radio' name='mapa'/>";
+
+                    html += "</td></tr>";
+                }
+                html += '</tbody></table></form>';
+            }
+            document.getElementById('results').style.display = "";
+            document.getElementById('results').innerHTML = html;
+        }
+
+        function seleccionamapa(id) {
+
+            // var radio = document.querySelector('input[name = "mapa"]:checked')
+            alert(id);
+            var lat = document.getElementById("lat" + id).innerHTML;
+            var lon = document.getElementById("lon" + id).innerHTML;
+            var miZoom = $("#mizoom").val();
+            console.log(lat);
+            console.log(lon);
+            var urlimg = "http://localhost:8000/staticmap.php?center=" + lat + "," + lon + "&zoom=" + miZoom + "&size=800x500&markers=" + lat + "," + lon + ",bullseye|";
+
+            $("#content").html("");
+            var $map = $('<div class="map"></div>');
+            var $img = $('<img  src="' + urlimg + '" />');
+            $map.append($img);
+            $("#content").append($map);
+
+        }
+        $(document).ready(function() {
+            alert("que pasa");
+            // $('input[name=mapa]:checked').on('<change', function() {
+            // $('input[name=mapa]:checked').on('change', 'select', function() {
+            $("body").on("change", "input[name=mapa]:radio", function() {
+                var id = $('input[name=mapa]:checked').attr('id');
+                seleccionamapa(id)
+            });
+        });
+    </script>
+</head>
+
+<body>
+
+    Ciudad: <input placeholder="Ciudad" name="ciudad" id="ciudad" /> Pais: <input placeholder="Pais" name="pais" id="pais" /> Cadena libre: <input placeholder="Lago titicaca" name="q" id="q" /> Zoom: <select type="text" name="mizoom" id="mizoom" onchange="seleccionamapa();">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+<option value="4">4</option>
+<option value="5" selected>5</option>
+<option value="6">6</option>
+<option value="7">7</option>
+<option value="8">8</option>
+<option value="9">9</option>
+<option value="10">10</option>
+<option value="11">11</option>
+<option value="12">12</option>
+<option value="13">13</option>
+<option value="14">14</option>
+<option value="15">15</option>
+</select>
+    <button id="geoLocaliza" onclick="geoLocaliza();"> Buscar </button>
+    <button id="Refresca" onclick="seleccionamapa();"> Refresca </button>
+    <div id="container">
+        <div id="results" style="float:left"></div>
+        <div id="content" style="float:left"></div>
+    </div>
+</body>
+
+</html>
